@@ -1,6 +1,8 @@
-export const supportWallet = {
-    metamask: 'Metamask',
-    binanceChain: 'BinanceChain',
-    trustWallet: 'TrustWallet',
-    dfyWallet: 'DFYWallet',
+module.exports = {
+    supportWallet: {
+        metamask: 'Metamask',
+        binanceChain: 'BinanceChain',
+        trustWallet: 'TrustWallet',
+        dfyWallet: 'DFYWallet',
+    }
 }
