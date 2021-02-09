@@ -201,6 +201,8 @@ async function getBalances() {
             }
         }
     }))
+
+    console.log('tokens: ', tokens)
 }
 
 module.exports = {
