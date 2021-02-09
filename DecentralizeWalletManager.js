@@ -186,23 +186,22 @@ async function send(password, to, amount, tokenSymbol, gasPrice, gasLimit, callb
                 amount
             ).multipliedBy(10 ** 18).integerValue()
         );
-        let receipt = null
+        const tx = {
+            from: currentAddress,
+            to: supportSymbol[tokenSymbol],
+            value: 0,
+            gas: gasLimit,
+            gasPrice: new BigNumber(
+                gasPrice
+            ).multipliedBy(10 ** 9).toString(),
+            data: txData.encodeABI()
+        };
         if (currentWalletType === supportWallet.dfyWallet) {
             const account = web3.eth.accounts.decrypt(keystore, password)
-            const tx = {
-                from: currentAddress,
-                to: supportSymbol[tokenSymbol],
-                value: 0,
-                gas: gasLimit,
-                gasPrice: new BigNumber(
-                    gasPrice
-                ).multipliedBy(10 ** 9).toString(),
-                data: txData.encodeABI()
-            };
             const signed = await account.signTransaction(tx)
             receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction)
         } else {
-            receipt = await txData.send()
+            receipt = await web3.eth.sendTransaction(tx)
         }
     }
 
