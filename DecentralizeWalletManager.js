@@ -1,4 +1,4 @@
-const { supportWallet } = require('./utils/contants');
+const {supportWallet} = require('./utils/contants');
 const Web3 = require('web3');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const {generateMnemonic} = require('bip39');
@@ -8,7 +8,7 @@ const erc20Abi = require('./contracts/erc20.abi.json')
 const network = 'TESTNET'
 // const network = 'MAINNET'
 
-const supportSymbol = network === 'TESTNET'? require('./tokens/supportSymbolTest') : require('./tokens/supportSymbol')
+const supportSymbol = network === 'TESTNET' ? require('./tokens/supportSymbolTest') : require('./tokens/supportSymbol')
 
 let currentAddress = '';
 let supportedWalletsType = Object.values(supportWallet);
@@ -20,19 +20,20 @@ let tokens = []
 
 function checkSupportedWalletsType() {
     let result = [supportWallet.dfyWallet]
-    if(!!(window.ethereum && window.ethereum.isMetaMask)) result.push(supportWallet.metamask)
-    if(!!window.BinanceChain) result.push(supportWallet.binanceChain)
-    if(!!(window.ethereum && window.ethereum.isTrust)) result.push(supportWallet.trustWallet)
+    if (!!(window.ethereum && window.ethereum.isMetaMask)) result.push(supportWallet.metamask)
+    if (!!window.BinanceChain) result.push(supportWallet.binanceChain)
+    if (!!(window.ethereum && window.ethereum.isTrust)) result.push(supportWallet.trustWallet)
     return result
 }
 
 let web3 = null
+
 async function connectWallet(walletType, timeout) {
     // TODO Env check
-    if(walletType === supportWallet.metamask || walletType === supportWallet.trustWallet) {
+    if (walletType === supportWallet.metamask || walletType === supportWallet.trustWallet) {
         await window.ethereum.enable()
         web3 = new Web3(window.ethereum)
-        if(walletType === supportWallet.metamask) {
+        if (walletType === supportWallet.metamask) {
             currentWalletType = supportWallet.metamask
         } else {
             currentWalletType = supportWallet.trustWallet
@@ -120,34 +121,42 @@ function exportPrivateKey(password) {
 async function calculateEstimatedGas(to, amount, tokenSymbol) {
     const gasPrice = await web3.eth.getGasPrice()
     let gasLimit = 0
-    if(tokenSymbol === 'BNB') {
+    if (tokenSymbol === 'BNB') {
         gasLimit = await web3.eth.estimateGas({
             from: currentAddress,
             to: to,
-            value: amount
+            value: new BigNumber(
+                amount
+            ).multipliedBy(10 ** 18).toString()
         })
     } else {
         const tokenContract = new web3.eth.Contract(
             erc20Abi,
             supportSymbol[tokenSymbol]
         )
-        gasLimit = await tokenContract.methods.transfer(
+        const txData = tokenContract.methods.transfer(
             to,
             new BigNumber(
                 amount
             ).multipliedBy(10 ** 18).integerValue()
-        ).estimateGas();
+        )
+        gasLimit = await web3.eth.estimateGas({
+            from: currentAddress,
+            to: supportSymbol[tokenSymbol],
+            value: '0',
+            data: txData.encodeABI()
+        })
     }
 
     return {
-        gasPrice: gasPrice,
+        gasPrice: new BigNumber(gasPrice).dividedBy(10 ** 9).toString(),
         gasLimit: gasLimit
     }
 }
 
-async function send (password, to, amount, tokenSymbol, gasPrice, gasLimit, callback) {
+async function send(password, to, amount, tokenSymbol, gasPrice, gasLimit, callback) {
     let receipt = null
-    if(tokenSymbol === 'BNB') {
+    if (tokenSymbol === 'BNB') {
         const tx = {
             from: currentAddress,
             to: to,
@@ -157,7 +166,7 @@ async function send (password, to, amount, tokenSymbol, gasPrice, gasLimit, call
             gas: gasLimit,
             gasPrice: gasPrice
         }
-        if(currentWalletType === supportWallet.dfyWallet) {
+        if (currentWalletType === supportWallet.dfyWallet) {
             const account = web3.eth.accounts.decrypt(keystore, password)
             const signed = await account.signTransaction(tx)
             receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction)
@@ -176,7 +185,7 @@ async function send (password, to, amount, tokenSymbol, gasPrice, gasLimit, call
             ).multipliedBy(10 ** 18).integerValue()
         );
         let receipt = null
-        if(currentWalletType === supportWallet.dfyWallet) {
+        if (currentWalletType === supportWallet.dfyWallet) {
             const account = web3.eth.accounts.decrypt(keystore, password)
             const tx = {
                 from: currentAddress,
@@ -206,7 +215,7 @@ function logout() {
 
 async function getBalances() {
     tokens = await Promise.all(Object.keys(supportSymbol).map(async (symbol) => {
-        if(symbol === 'BNB') {
+        if (symbol === 'BNB') {
             const userBalance = await web3.eth.getBalance(currentAddress)
             return {
                 symbol: symbol,
