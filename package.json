@@ -11,5 +11,9 @@
     "url": "git@edsolabs.gitlab.com:edsolabs/edsolabs-defi/dAppWalletUtils.git"
   },
   "author": "Ylgr",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.2.1",
+    "web3": "^1.3.4"
+  }
 }
