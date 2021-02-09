@@ -86,6 +86,7 @@ function importKeyStore(fileContent) {
     keystore = fileContent
     web3 = new Web3("https://data-seed-prebsc-1-s1.binance.org:8545")
     getBalances()
+    currentWalletType = supportWallet.dfyWallet
 }
 
 function createWallet(password) {
@@ -117,11 +118,35 @@ function exportPrivateKey(password) {
 }
 
 async function calculateEstimatedGas(to, amount, tokenSymbol) {
-    return web3.eth.getGasPrice()
+    const gasPrice = await web3.eth.getGasPrice()
+    let gasLimit = 0
+    if(tokenSymbol === 'BNB') {
+        gasLimit = await web3.eth.estimateGas({
+            from: currentAddress,
+            to: to,
+            value: amount
+        })
+    } else {
+        const tokenContract = new web3.eth.Contract(
+            erc20Abi,
+            supportSymbol[tokenSymbol]
+        )
+        gasLimit = await tokenContract.methods.transfer(
+            to,
+            new BigNumber(
+                amount
+            ).multipliedBy(10 ** 18).integerValue()
+        ).estimateGas();
+    }
+
+    return {
+        gasPrice: gasPrice,
+        gasLimit: gasLimit
+    }
 }
 
 async function send (password, to, amount, tokenSymbol, gasPrice, gasLimit, callback) {
-    const account = web3.eth.accounts.decrypt(keystore, password)
+    let receipt = null
     if(tokenSymbol === 'BNB') {
         const tx = {
             from: currentAddress,
@@ -132,11 +157,13 @@ async function send (password, to, amount, tokenSymbol, gasPrice, gasLimit, call
             gas: gasLimit,
             gasPrice: gasPrice
         }
-        const signed = await account.signTransaction(tx)
-        console.log('signed: ', signed)
-        const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction)
-        getBalances()
-        return receipt
+        if(currentWalletType === supportWallet.dfyWallet) {
+            const account = web3.eth.accounts.decrypt(keystore, password)
+            const signed = await account.signTransaction(tx)
+            receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction)
+        } else {
+            receipt = await web3.eth.sendTransaction(tx)
+        }
     } else {
         const tokenContract = new web3.eth.Contract(
             erc20Abi,
@@ -147,21 +174,27 @@ async function send (password, to, amount, tokenSymbol, gasPrice, gasLimit, call
             new BigNumber(
                 amount
             ).multipliedBy(10 ** 18).integerValue()
-        ).encodeABI();
-        const tx = {
-            from: currentAddress,
-            to: supportSymbol[tokenSymbol],
-            value: 0,
-            gas: gasLimit,
-            gasPrice: gasPrice,
-            data: txData
-        };
-        const signed = await account.signTransaction(tx)
-        console.log('signed: ', signed)
-        const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction)
-        getBalances()
-        return receipt
+        );
+        let receipt = null
+        if(currentWalletType === supportWallet.dfyWallet) {
+            const account = web3.eth.accounts.decrypt(keystore, password)
+            const tx = {
+                from: currentAddress,
+                to: supportSymbol[tokenSymbol],
+                value: 0,
+                gas: gasLimit,
+                gasPrice: gasPrice,
+                data: txData.encodeABI()
+            };
+            const signed = await account.signTransaction(tx)
+            receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction)
+        } else {
+            receipt = await txData.send()
+        }
     }
+
+    getBalances()
+    return receipt
 }
 
 function logout() {
@@ -173,12 +206,8 @@ function logout() {
 
 async function getBalances() {
     tokens = await Promise.all(Object.keys(supportSymbol).map(async (symbol) => {
-        console.log('symbol: ', symbol)
         if(symbol === 'BNB') {
-            const userBalance = web3.eth.getBalance(currentAddress)
-
-            console.log('userBalance: ', userBalance)
-
+            const userBalance = await web3.eth.getBalance(currentAddress)
             return {
                 symbol: symbol,
                 balance: userBalance
@@ -193,16 +222,12 @@ async function getBalances() {
                 .balanceOf(currentAddress)
                 .call()
 
-            console.log('userBalance: ', userBalance)
-
             return {
                 symbol: symbol,
                 balance: userBalance
             }
         }
     }))
-
-    console.log('tokens: ', tokens)
 }
 
 module.exports = {
