@@ -172,9 +172,13 @@ function logout() {
 }
 
 async function getBalances() {
-    tokens = Object.keys(supportSymbol).map(async (symbol) => {
+    tokens = await Promise.all(Object.keys(supportSymbol).map(async (symbol) => {
+        console.log('symbol: ', symbol)
         if(symbol === 'BNB') {
             const userBalance = web3.eth.getBalance(currentAddress)
+
+            console.log('userBalance: ', userBalance)
+
             return {
                 symbol: symbol,
                 balance: userBalance
@@ -188,12 +192,15 @@ async function getBalances() {
             const userBalance = await tokenContract.methods
                 .balanceOf(currentAddress)
                 .call()
+
+            console.log('userBalance: ', userBalance)
+
             return {
                 symbol: symbol,
                 balance: userBalance
             }
         }
-    })
+    }))
 }
 
 module.exports = {
