@@ -205,11 +205,27 @@ async function getBalances() {
     console.log('tokens: ', tokens)
 }
 
+function getCurrentAddress() {
+    return currentAddress
+}
+
+function getCurrentWalletType() {
+    return currentWalletType
+}
+
+function getSupportWalletsType() {
+    return supportedWalletsType
+}
+
+function getTokens() {
+    return tokens
+}
+
 module.exports = {
-    currentAddress,
-    currentWalletType,
-    supportedWalletsType,
-    tokens,
+    currentAddress: getCurrentAddress(),
+    currentWalletType: getCurrentWalletType(),
+    supportedWalletsType: getSupportWalletsType(),
+    tokens: getTokens(),
     checkSupportedWalletsType,
     connectWallet,
     importPrivateKey,
