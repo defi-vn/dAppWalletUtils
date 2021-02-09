@@ -1,4 +1,4 @@
-const { supportWallet} = require('./utils/contants');
+const { supportWallet } = require('./utils/contants');
 const Web3 = require('web3');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const {generateMnemonic} = require('bip39');
@@ -17,10 +17,6 @@ let keystore = null;
 let isConnected = true;
 let currentWalletType = null;
 let tokens = []
-
-async function init() {
-
-}
 
 function checkSupportedWalletsType() {
     let result = [supportWallet.dfyWallet]
@@ -47,6 +43,7 @@ async function connectWallet(walletType, timeout) {
         currentWalletType = supportWallet.binanceChain
     }
     const accounts = await web3.eth.getAccounts()
+    console.log('accounts: ', accounts)
     currentAddress = accounts[0]
     await getBalances()
 }
@@ -204,7 +201,6 @@ module.exports = {
     currentWalletType,
     supportedWalletsType,
     tokens,
-    init,
     checkSupportedWalletsType,
     connectWallet,
     importPrivateKey,
