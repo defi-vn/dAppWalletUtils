@@ -10,11 +10,11 @@ const network = 'TESTNET'
 
 const supportSymbol = network === 'TESTNET'? require('./tokens/supportSymbolTest') : require('./tokens/supportSymbol')
 
-let currentAddress = '0x1eCE3c290B1B6b388bffe0002eAb1dF51356a9Df';
+let currentAddress = '';
 let supportedWalletsType = Object.values(supportWallet);
 
 let keystore = null;
-let isConnected = true;
+let isConnected = false;
 let currentWalletType = null;
 let tokens = []
 
@@ -205,27 +205,22 @@ async function getBalances() {
     console.log('tokens: ', tokens)
 }
 
-function getCurrentAddress() {
-    return currentAddress
-}
-
-function getCurrentWalletType() {
-    return currentWalletType
-}
-
-function getSupportWalletsType() {
-    return supportedWalletsType
-}
-
-function getTokens() {
-    return tokens
-}
-
 module.exports = {
-    currentAddress: getCurrentAddress(),
-    currentWalletType: getCurrentWalletType(),
-    supportedWalletsType: getSupportWalletsType(),
-    tokens: getTokens(),
+    currentAddress: function () {
+        return currentAddress
+    },
+    currentWalletType: function () {
+        return currentWalletType
+    },
+    supportedWalletsType: function () {
+        return supportedWalletsType
+    },
+    tokens: function () {
+        return tokens
+    },
+    isConnected: function () {
+        return isConnected
+    },
     checkSupportedWalletsType,
     connectWallet,
     importPrivateKey,
