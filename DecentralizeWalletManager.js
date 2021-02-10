@@ -46,6 +46,7 @@ async function connectWallet(walletType, timeout) {
     const accounts = await web3.eth.getAccounts()
     console.log('accounts: ', accounts)
     currentAddress = accounts[0]
+    isConnected = true
     await getBalances()
 }
 
@@ -54,7 +55,7 @@ function generateKeystore(provider, password) {
     currentAddress = Object.keys(provider.wallets)[0]
     currentWalletType = supportWallet.dfyWallet
     const wallet = provider.wallets[currentAddress]
-
+    isConnected = true
     keystore = web3.eth.accounts.encrypt(wallet.getPrivateKeyString(), password)
     getBalances()
 }
@@ -88,6 +89,7 @@ function importKeyStore(fileContent) {
     web3 = new Web3("https://data-seed-prebsc-1-s1.binance.org:8545")
     getBalances()
     currentWalletType = supportWallet.dfyWallet
+    isConnected = true
 }
 
 function createWallet(password) {
@@ -211,7 +213,7 @@ async function send(password, to, amount, tokenSymbol, gasPrice, gasLimit, callb
 
 function logout() {
     keystore = null;
-    isConnected = true;
+    isConnected = false;
     currentWalletType = null;
     tokens = []
 }
@@ -222,7 +224,7 @@ async function getBalances() {
             const userBalance = await web3.eth.getBalance(currentAddress)
             return {
                 symbol: symbol,
-                balance: userBalance
+                balance: BigNumber(userBalance).dividedBy(10 ** 18).toString()
             }
         } else {
             const address = supportSymbol[symbol]
@@ -236,7 +238,7 @@ async function getBalances() {
 
             return {
                 symbol: symbol,
-                balance: userBalance
+                balance: BigNumber(userBalance).dividedBy(10 ** 18).toString()
             }
         }
     }))
